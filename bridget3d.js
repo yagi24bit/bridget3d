@@ -1,10 +1,5 @@
 class BridgetField {
 	constructor() {
-		this.MAIN_WIDTH = 736;
-		this.MAIN_HEIGHT = 576;
-		this.WIPE_WIDTH = 288;
-		this.WIPE_HEIGHT = 288;
-
 		this.BOARD_SIZE = 160;
 		this.BLOCK_SIZE = 16;
 		this.MAINCAMERA_DISTANCE = 200;
@@ -23,24 +18,26 @@ class BridgetField {
 		this.maincanvas = document.createElement("canvas"); // メイン
 		this.wipecanvas1 = document.createElement("canvas"); // ワイプ 1 (固定カメラ)
 		this.wipecanvas2 = document.createElement("canvas"); // ワイプ 1 (回転)
+		this.maincanvas.style.position = "absolute";
+		this.maincanvas.style.left = "0px";
+		this.maincanvas.style.top = "0px";
+		this.wipecanvas1.style.position = "absolute";
+		this.wipecanvas2.style.position = "absolute";
 		this.blocks = [];
 
 		// レンダラ (メイン)
 		this.mainrenderer = new THREE.WebGLRenderer({canvas: this.maincanvas});
 		this.mainrenderer.setPixelRatio(window.devicePixelRatio);
-		this.mainrenderer.setSize(this.MAIN_WIDTH, this.MAIN_HEIGHT);
 		this.mainrenderer.setClearColor(0xCCCCCC);
 
 		// レンダラ (ワイプ 1)
 		this.wiperenderer1 = new THREE.WebGLRenderer({canvas: this.wipecanvas1});
 		this.wiperenderer1.setPixelRatio(window.devicePixelRatio);
-		this.wiperenderer1.setSize(this.WIPE_WIDTH, this.WIPE_HEIGHT);
 		this.wiperenderer1.setClearColor(0xCCCCCC);
 
 		// レンダラ (ワイプ2)
 		this.wiperenderer2 = new THREE.WebGLRenderer({canvas: this.wipecanvas2});
 		this.wiperenderer2.setPixelRatio(window.devicePixelRatio);
-		this.wiperenderer2.setSize(this.WIPE_WIDTH, this.WIPE_HEIGHT);
 		this.wiperenderer2.setClearColor(0xCCCCCC);
 
 		// シーン
@@ -53,7 +50,7 @@ class BridgetField {
 		this.maincamera_theta = Math.PI / 4;
 
 		// カメラ (ワイプ) // NOTE: ワイプ 1 と 2 で使いまわし
-		this.wipecamera = new THREE.PerspectiveCamera(this.WIPECAMERA_FOV, this.WIPE_WIDTH / this.WIPE_HEIGHT);
+		this.wipecamera = new THREE.PerspectiveCamera(this.WIPECAMERA_FOV, 1);
 		this.wipecamera.up.set(0, 0, 1); // z 軸が上になるように変更
 
 		var img, texture;
@@ -87,6 +84,8 @@ class BridgetField {
 		this.material_p.push(new THREE.MeshBasicMaterial({map: texture}));
 
 		this.addMouseListener();
+		this.resize();
+		window.addEventListener("resize", () => { this.resize(); }, false);
 		window.addEventListener("load", () => { this.tick(); }, false);
 	}
 
@@ -121,6 +120,46 @@ class BridgetField {
 		div.appendChild(this.wipecanvas2);
 
 		return div;
+	}
+
+	resize() {
+		let winwidth = window.innerWidth;
+		let winheight = window.innerHeight;
+
+		// サイズを変更
+		let unitsize = Math.floor(
+			winwidth > winheight
+			? Math.min(winwidth / 16, winheight / 9) // landscape
+			: Math.min(winwidth / 9, winheight / 16) // portrait
+		);
+		this.MAIN_WIDTH  = unitsize * (winwidth > winheight ? 11.5 : 9);
+		this.MAIN_HEIGHT = unitsize * (winwidth > winheight ? 9 : 11.5);
+		this.WIPE_WIDTH  = unitsize * 4.5;
+		this.WIPE_HEIGHT = unitsize * 4.5;
+		this.mainrenderer.setSize(this.MAIN_WIDTH, this.MAIN_HEIGHT);
+		this.wiperenderer1.setSize(this.WIPE_WIDTH, this.WIPE_HEIGHT);
+		this.wiperenderer2.setSize(this.WIPE_WIDTH, this.WIPE_HEIGHT);
+
+		// 表示位置を変更
+		if(winwidth > winheight) {
+			// landscape
+			this.wipecanvas1.style.left = this.MAIN_WIDTH + "px";
+			this.wipecanvas1.style.top = "0px";
+			this.wipecanvas2.style.left = this.MAIN_WIDTH + "px";
+			this.wipecanvas2.style.top = this.WIPE_HEIGHT + "px";
+		} else {
+			// portrait
+			this.wipecanvas1.style.left = "0px";
+			this.wipecanvas1.style.top = this.MAIN_HEIGHT + "px";
+			this.wipecanvas2.style.left = this.WIPE_WIDTH + "px";
+			this.wipecanvas2.style.top = this.MAIN_HEIGHT + "px";
+		}
+
+		// 再描画
+		this.maincamera.aspect = this.MAIN_WIDTH / this.MAIN_HEIGHT;
+		this.maincamera.zoom = (winwidth > winheight ? 1 : (9 / 11.5) ** 2);
+		this.maincamera.updateProjectionMatrix();
+		this.tick();
 	}
 
 	mouseDown(x, y) {

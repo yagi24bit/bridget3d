@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+html {
+	/* for iOS */
+	overflow :  auto;
+	height :    100%
+}
+
+body {
+	overflow :  hidden
+}
