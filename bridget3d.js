@@ -3,6 +3,11 @@ class BridgetField {
 		this.MAIN_WIDTH = 1024;
 		this.MAIN_HEIGHT = 576;
 
+		this.BOARD_SIZE = 160;
+		this.BLOCK_SIZE = 16;
+		this.MAINCAMERA_DISTANCE = 200;
+		this.MAINCAMERA_FOV = 45;
+
 		this.init();
 	}
 
@@ -15,20 +20,19 @@ class BridgetField {
 		this.blocks = [];
 
 		// レンダラ
-		this.renderer = new THREE.WebGLRenderer({canvas: this.maincanvas});
-		this.renderer.setPixelRatio(window.devicePixelRatio);
-		this.renderer.setSize(this.MAIN_WIDTH, this.MAIN_HEIGHT);
-		this.renderer.setClearColor(0xCCCCCC);
+		this.mainrenderer = new THREE.WebGLRenderer({canvas: this.maincanvas});
+		this.mainrenderer.setPixelRatio(window.devicePixelRatio);
+		this.mainrenderer.setSize(this.MAIN_WIDTH, this.MAIN_HEIGHT);
+		this.mainrenderer.setClearColor(0xCCCCCC);
 
 		// シーン
 		this.scene = new THREE.Scene();
 
 		// カメラ
-		this.camera = new THREE.PerspectiveCamera(45, this.MAIN_WIDTH / this.MAIN_HEIGHT);
-		this.camera.up.set(0, 0, 1); // z 軸が上になるように変更
-		this.camera_radius = 200;
-		this.camera_phi = -Math.PI / 6;
-		this.camera_theta = Math.PI / 4;
+		this.maincamera = new THREE.PerspectiveCamera(this.MAINCAMERA_FOV, this.MAIN_WIDTH / this.MAIN_HEIGHT);
+		this.maincamera.up.set(0, 0, 1); // z 軸が上になるように変更
+		this.maincamera_phi = -Math.PI / 6;
+		this.maincamera_theta = Math.PI / 4;
 
 		var img, texture;
 
@@ -39,7 +43,7 @@ class BridgetField {
 		texture = new THREE.Texture(img);
 		texture.format = THREE.RGBFormat;
 		texture.needsUpdate = true;
-		const board = new THREE.Mesh(new THREE.BoxGeometry(160, 160, 2), new THREE.MeshBasicMaterial({map: texture}));
+		const board = new THREE.Mesh(new THREE.BoxGeometry(this.BOARD_SIZE, this.BOARD_SIZE, 2), new THREE.MeshBasicMaterial({map: texture}));
 		board.position.set(0, 0, -1);
 		this.scene.add(board);
 
@@ -65,13 +69,13 @@ class BridgetField {
 	}
 
 	tick() {
-		this.camera.position.set(
-			this.camera_radius * Math.cos(this.camera_phi) * Math.cos(this.camera_theta),
-			this.camera_radius * Math.sin(this.camera_phi) * Math.cos(this.camera_theta),
-			this.camera_radius * Math.sin(this.camera_theta)
+		this.maincamera.position.set(
+			this.MAINCAMERA_DISTANCE * Math.cos(this.maincamera_phi) * Math.cos(this.maincamera_theta),
+			this.MAINCAMERA_DISTANCE * Math.sin(this.maincamera_phi) * Math.cos(this.maincamera_theta),
+			this.MAINCAMERA_DISTANCE * Math.sin(this.maincamera_theta)
 		);
-		this.camera.lookAt(new THREE.Vector3(0, 0, -16));
-		this.renderer.render(this.scene, this.camera);
+		this.maincamera.lookAt(new THREE.Vector3(0, 0, -this.BLOCK_SIZE));
+		this.mainrenderer.render(this.scene, this.maincamera);
 	}
 
 	// ------------------------------------------------------------
@@ -92,9 +96,9 @@ class BridgetField {
 		if(x < 0 || x >= window.innerWidth || y < 0 || y >= window.innerHeight) { this.mouseUp(); }
 		if(!this.pointerX || !this.pointerY) { return; }
 
-		this.camera_phi   -= (x - this.pointerX) * Math.PI / this.MAIN_WIDTH;
-		this.camera_theta += (y - this.pointerY) * Math.PI / this.MAIN_HEIGHT;
-		if(this.camera_theta < 0) { this.camera_theta = 0; } else if(this.camera_theta > Math.PI / 2) { this.camera_theta = Math.PI / 2; }
+		this.maincamera_phi   -= (x - this.pointerX) * Math.PI / this.MAIN_WIDTH;
+		this.maincamera_theta += (y - this.pointerY) * Math.PI / this.MAIN_HEIGHT;
+		if(this.maincamera_theta < 0) { this.maincamera_theta = 0; } else if(this.maincamera_theta > Math.PI / 2) { this.maincamera_theta = Math.PI / 2; }
 		this.mouseDown(x, y);
 
 		this.tick();
@@ -137,9 +141,9 @@ class BridgetField {
 			let x = p[0], y = p[1], z = p[2];
 			let obj = new Object();
 			obj.material = this.material_p[color];
-			obj.geometry = new THREE.BoxGeometry(16, 16, 16);
+			obj.geometry = new THREE.BoxGeometry(this.BLOCK_SIZE, this.BLOCK_SIZE, this.BLOCK_SIZE);
 			obj.mesh = new THREE.Mesh(obj.geometry, obj.material);
-			obj.mesh.position.set((x - 4.5) * 16, -(y - 4.5) * 16, (z + 0.5) * 16);
+			obj.mesh.position.set((x - 4.5) * this.BLOCK_SIZE, -(y - 4.5) * this.BLOCK_SIZE, (z + 0.5) * this.BLOCK_SIZE);
 
 			b.push(obj);
 			this.scene.add(obj.mesh);
