@@ -60,6 +60,7 @@ class BridgetField {
 		texture.needsUpdate = true;
 		this.material_p.push(new THREE.MeshBasicMaterial({map: texture}));
 
+		this.addMouseListener();
 		window.addEventListener("load", () => { this.tick(); }, false);
 	}
 
@@ -71,9 +72,6 @@ class BridgetField {
 		);
 		this.camera.lookAt(new THREE.Vector3(0, 0, -16));
 		this.renderer.render(this.scene, this.camera);
-
-		this.camera_phi += 0.005;
-		requestAnimationFrame(() => { this.tick(); });
 	}
 
 	// ------------------------------------------------------------
@@ -82,6 +80,51 @@ class BridgetField {
 
 	canvasTag() {
 		return this.maincanvas;
+	}
+
+	mouseDown(x, y) {
+		if(x < 0 || x >= window.innerWidth || y < 0 || y >= window.innerHeight) { return; }
+		this.pointerX = x;
+		this.pointerY = y;
+	}
+
+	mouseMove(x, y) {
+		if(x < 0 || x >= window.innerWidth || y < 0 || y >= window.innerHeight) { this.mouseUp(); }
+		if(!this.pointerX || !this.pointerY) { return; }
+
+		this.camera_phi   -= (x - this.pointerX) * Math.PI / this.MAIN_WIDTH;
+		this.camera_theta += (y - this.pointerY) * Math.PI / this.MAIN_HEIGHT;
+		if(this.camera_theta < 0) { this.camera_theta = 0; } else if(this.camera_theta > Math.PI / 2) { this.camera_theta = Math.PI / 2; }
+		this.mouseDown(x, y);
+
+		this.tick();
+	}
+
+	mouseUp() {
+		this.pointerX = null;
+		this.pointerY = null;
+	}
+
+	addMouseListener() {
+		// mousedown
+		window.addEventListener("mousedown", (ev) => {
+			if(ev.button != 0) { return; }
+			this.mouseDown(ev.clientX - this.maincanvas.offsetLeft, ev.clientY - this.maincanvas.offsetTop);
+			try { ev.preventDefault(); } catch(ex) {}
+			try { ev.returnValue = false; } catch(ex) {}
+		}, false);
+
+		// mousemove
+		window.addEventListener("mousemove", (ev) => {
+			this.mouseMove(ev.clientX - this.maincanvas.offsetLeft, ev.clientY - this.maincanvas.offsetTop);
+			try { ev.preventDefault(); } catch(ex) {}
+			try { ev.returnValue = false; } catch(ex) {}
+		}, false);
+
+		// mouseup
+		window.addEventListener("mouseup", (ev) => {
+			this.mouseUp();
+		}, false);
 	}
 
 	// ------------------------------------------------------------
