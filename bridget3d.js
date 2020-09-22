@@ -92,9 +92,10 @@ class BridgetField {
 	tick() {
 		// メイン
 		this.maincamera.position.set(
-			this.MAINCAMERA_DISTANCE * Math.cos(this.maincamera_phi) * Math.cos(this.maincamera_theta),
-			this.MAINCAMERA_DISTANCE * Math.sin(this.maincamera_phi) * Math.cos(this.maincamera_theta),
-			this.MAINCAMERA_DISTANCE * Math.sin(this.maincamera_theta)
+			// NOTE: θ=0 のときにカメラが Z 軸に乗らないように、少しだけずらす
+			(this.MAINCAMERA_DISTANCE * Math.sin(this.maincamera_theta) + 1) * Math.cos(this.maincamera_phi),
+			(this.MAINCAMERA_DISTANCE * Math.sin(this.maincamera_theta) + 1) * Math.sin(this.maincamera_phi),
+			this.MAINCAMERA_DISTANCE * Math.cos(this.maincamera_theta)
 		);
 		this.maincamera.lookAt(new THREE.Vector3(0, 0, -this.BLOCK_SIZE));
 		this.mainrenderer.render(this.scene, this.maincamera);
@@ -173,7 +174,7 @@ class BridgetField {
 		if(!this.pointerX || !this.pointerY) { return; }
 
 		this.maincamera_phi   -= (x - this.pointerX) * Math.PI / this.MAIN_WIDTH;
-		this.maincamera_theta += (y - this.pointerY) * Math.PI / this.MAIN_HEIGHT;
+		this.maincamera_theta -= (y - this.pointerY) * Math.PI / this.MAIN_HEIGHT;
 		if(this.maincamera_theta < 0) { this.maincamera_theta = 0; } else if(this.maincamera_theta > Math.PI / 2) { this.maincamera_theta = Math.PI / 2; }
 		this.mouseDown(x, y);
 
