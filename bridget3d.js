@@ -2,7 +2,7 @@ class BridgetField {
 	constructor() {
 		this.BOARD_SIZE = 160;
 		this.BLOCK_SIZE = 16;
-		this.MAINCAMERA_DISTANCE = 200;
+		this.MAINCAMERA_DISTANCE = 240;
 		this.MAINCAMERA_FOV = 45;
 		this.WIPECAMERA_DISTANCE = 1200;
 		this.WIPECAMERA_FOV = 10;
