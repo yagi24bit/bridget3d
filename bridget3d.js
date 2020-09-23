@@ -67,7 +67,7 @@ class BridgetField {
 		this.scene.add(board);
 
 		// 駒のマテリアル
-		this.material_p = [];
+		this.material_p = [null];
 		//TODO: texture = new THREE.TextureLoader().load('textures/piece0.png');
 		img = new Image();
 		img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAMklEQVR42mNkoDFgBOL/Z9JoZbrJrFELRi0YtWDUglELRi0YtWDUglELRi0YURbQFAAAWGNaIeSs6kcAAAAASUVORK5CYII=';
@@ -220,7 +220,7 @@ class BridgetField {
 			obj.material = this.material_p[color];
 			obj.geometry = new THREE.BoxGeometry(this.BLOCK_SIZE, this.BLOCK_SIZE, this.BLOCK_SIZE);
 			obj.mesh = new THREE.Mesh(obj.geometry, obj.material);
-			obj.mesh.position.set((x - 4.5) * this.BLOCK_SIZE, -(y - 4.5) * this.BLOCK_SIZE, (z + 0.5) * this.BLOCK_SIZE);
+			obj.mesh.position.set((x - 3.5) * this.BLOCK_SIZE, -(y - 3.5) * this.BLOCK_SIZE, (z + 0.5) * this.BLOCK_SIZE);
 
 			b.push(obj);
 			this.scene.add(obj.mesh);
@@ -246,8 +246,8 @@ class BridgetField {
 
 let f = new BridgetField();
 document.body.appendChild(f.canvasTag());
-f.pushBlock(0, [[5, 4, 0], [5, 5, 0], [6, 4, 0], [6, 5, 0]]);
-f.pushBlock(1, [[5, 6, 0], [5, 6, 1], [5, 5, 1], [5, 5, 2]]);
+f.pushBlock(1, [[4, 3, 0], [4, 4, 0], [5, 3, 0], [5, 4, 0]]);
+f.pushBlock(2, [[4, 5, 0], [4, 5, 1], [4, 4, 1], [4, 4, 2]]);
 //f.popBlock();
 //f.clearBlocks();
 console.log(f);
