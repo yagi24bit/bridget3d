@@ -1,5 +1,6 @@
 class BridgetField {
 	constructor() {
+		// Three.js 関連の定数
 		this.BOARD_SIZE = 160;
 		this.BLOCK_SIZE = 16;
 		this.MAINCAMERA_DISTANCE = 240;
@@ -7,14 +8,24 @@ class BridgetField {
 		this.WIPECAMERA_DISTANCE = 1200;
 		this.WIPECAMERA_FOV = 10;
 
-		this.init();
+		// Bridget 関連の定数
+		this.FIELD_WIDTH = 8;
+		this.FIELD_HEIGHT = 8;
+		this.FIELD_DEPTH = 3;
+
+		this.COLOR_EMPTY = 0;
+		this.COLOR_WHITE = 1;
+		this.COLOR_BLACK = 2;
+
+		this.initLogic();
+		this.initView();
 	}
 
 	// ------------------------------------------------------------
 	// Three.js 関連
 	// ------------------------------------------------------------
 
-	init() {
+	initView() {
 		this.maincanvas = document.createElement("canvas"); // メイン
 		this.wipecanvas1 = document.createElement("canvas"); // ワイプ 1 (固定カメラ)
 		this.wipecanvas2 = document.createElement("canvas"); // ワイプ 1 (回転)
@@ -212,11 +223,35 @@ class BridgetField {
 	// 内部処理
 	// ------------------------------------------------------------
 
+	initLogic() {
+		this.field =
+			Array.from(new Array(this.FIELD_DEPTH), () => {
+				return Array.from(new Array(this.FIELD_HEIGHT), () => {
+					return new Array(this.FIELD_WIDTH).fill(this.COLOR_EMPTY)
+				})
+			})
+		;
+	}
+
 	pushBlock(color, arr) {
+		// ブロックが置けるかどうかのチェック
+		for(let p of arr) {
+			let x = p[0], y = p[1], z = p[2];
+			if(x < 0 || x >= this.FIELD_WIDTH || y < 0 || y >= this.FIELD_HEIGHT) { return false; }
+			if(this.field[z][y][x] != this.COLOR_EMPTY) { return false; }
+			if(z > 0 && this.field[z - 1][y][x] == this.COLOR_EMPTY && !arr.some(a => a[0] == x && a[1] == y && a[2] == z - 1)) { return false; }
+		}
+
+		// ブロックを置く
 		let b = [];
 		for(let p of arr) {
 			let x = p[0], y = p[1], z = p[2];
+			this.field[z][y][x] = color;
+
 			let obj = new Object();
+			obj.x = x;
+			obj.y = y;
+			obj.z = z;
 			obj.material = this.material_p[color];
 			obj.geometry = new THREE.BoxGeometry(this.BLOCK_SIZE, this.BLOCK_SIZE, this.BLOCK_SIZE);
 			obj.mesh = new THREE.Mesh(obj.geometry, obj.material);
@@ -226,14 +261,20 @@ class BridgetField {
 			this.scene.add(obj.mesh);
 		}
 		this.blocks.push(b);
+
+		return true;
 	}
 
 	popBlock() {
 		let b = this.blocks.pop();
+		if(!b) { return null; }
+
 		for(let obj of b) {
 			this.scene.remove(obj.mesh);
 			obj.geometry.dispose();
 			obj.material.dispose();
+
+			this.field[obj.z][obj.y][obj.x] = this.COLOR_EMPTY;
 		}
 
 		return b;
