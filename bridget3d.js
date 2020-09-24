@@ -233,6 +233,51 @@ class BridgetField {
 		;
 	}
 
+	parseBridgetNotation(str) {
+		const template = [
+			[[ 0,  0,  0], [ 0,  1,  0], [ 0,  2,  0], [ 1,  2,  0]], // L
+			[[ 0,  0,  0], [ 0, -1,  0], [ 0, -2,  0], [ 1, -2,  0]], // J
+			[[ 0,  0,  0], [ 1,  0,  0], [ 2,  0,  0], [ 0,  0,  1]], // P
+			[[ 0,  0,  0], [ 0,  0,  1], [ 1,  0,  1], [ 2,  0,  1]], // H
+			[[ 0,  0,  0], [ 1,  0,  0], [ 0,  0,  1], [ 0,  0,  2]], // B
+			[[ 0,  0,  0], [ 0,  0,  1], [ 0,  0,  2], [ 1,  0,  2]], // C
+			[[ 0,  0,  0], [ 1,  0,  0], [ 0,  1,  0], [ 1,  1,  0]], // O
+			[[ 0,  0,  0], [ 1,  0,  0], [ 0,  0,  1], [ 1,  0,  1]], // W
+			[[ 0,  0,  0], [ 1,  0,  0], [ 1, -1,  0], [ 2, -1,  0]], // S
+			[[ 0,  0,  0], [ 1,  0,  0], [ 1,  1,  0], [ 2,  1,  0]], // Z
+			[[ 0,  0,  0], [ 0,  0,  1], [ 1,  0,  1], [-1,  0,  0]], // D
+			[[ 0,  0,  0], [ 0,  0,  1], [ 1,  0,  1], [ 1,  0,  2]], // A
+			[[ 0,  0,  0], [ 1,  0,  0], [ 0,  1,  0], [ 0, -1,  0]], // T
+			[[ 0,  0,  0], [ 1,  0,  0], [ 0,  0,  1], [-1,  0,  0]], // V
+			[[ 0,  0,  0], [ 0,  0,  1], [ 1,  0,  1], [-1,  0,  1]], // U
+			[[ 0,  0,  0], [ 0,  0,  1], [ 1,  0,  1], [ 0,  0,  2]]  // G
+		];
+		const piece = {L: 0, J: 1, P: 2, H: 3, B: 4, C: 5, O: 6, W: 7, S: 8, Z: 9, D: 10, A: 11, T: 12, V: 13, U: 14, G: 15};
+		const direction = {E: 0, S: 1, W: 2, N: 3};
+		const sin = [0, 1, 0, -1];
+		const cos = [1, 0, -1, 0];
+
+		// 引数チェック・パース
+		let reg = /([1-8])([1-8])([ABCDGHJLOPSTUVWZ])([ENSW])/.exec(str.replaceAll(" ", "").toUpperCase());
+		if(reg == null) {
+			console.warn("invalid argument: (" + str + ")");
+			return null;
+		}
+		let y = parseInt(reg[1], 10), x = parseInt(reg[2], 10), p = reg[3], d = reg[4];
+
+		// 回転・平行移動して配列に格納
+		// NOTE: one-based index を zero-based index に変換
+		let ret = [];
+		let t = template[piece[p]];
+		for(let i = 0; i < t.length; i++) {
+			let tx = t[i][0], ty = t[i][1], tz = t[i][2];
+			let s = sin[direction[d]], c = cos[direction[d]];
+			ret.push([x + tx * c - ty * s - 1, y + tx * s + ty * c - 1, tz]);
+		}
+
+		return ret;
+	}
+
 	pushBlock(color, arr) {
 		// ブロックが置けるかどうかのチェック
 		for(let p of arr) {
@@ -287,8 +332,13 @@ class BridgetField {
 
 let f = new BridgetField();
 document.body.appendChild(f.canvasTag());
-f.pushBlock(1, [[4, 3, 0], [4, 4, 0], [5, 3, 0], [5, 4, 0]]);
-f.pushBlock(2, [[4, 5, 0], [4, 5, 1], [4, 4, 1], [4, 4, 2]]);
+//f.pushBlock(1, [[4, 3, 0], [4, 4, 0], [5, 3, 0], [5, 4, 0]]);
+//f.pushBlock(2, [[4, 5, 0], [4, 5, 1], [4, 4, 1], [4, 4, 2]]);
 //f.popBlock();
 //f.clearBlocks();
+let kifu = [[2, "44WS"], [1, "45CW"], [2, "43VS"], [1, "42CE"], [2, "46BS"], [1, "55GE"], [2, "66CN"], [1, "65WS"], [2, "64CE"], [1, "63GN"], [2, "52CE"], [1, "51VS"], [2, "62GW"], [1, "71CN"], [2, "82VE"], [1, "35WE"], [2, "27WS"], [1, "73VE"], [2, "77VS"], [1, "12ZS"], [2, "13DW"], [1, "15DW"], [2, "84DW"], [1, "23DW"]]
+for(let k of kifu) {
+	f.pushBlock(k[0], f.parseBridgetNotation(k[1]));
+}
+f.tick();
 console.log(f);
