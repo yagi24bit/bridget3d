@@ -3,8 +3,8 @@ class BridgetField {
 		// Three.js 関連の定数
 		this.BOARD_SIZE = 160;
 		this.BLOCK_SIZE = 16;
-		this.MAINCAMERA_DISTANCE = 240;
-		this.MAINCAMERA_FOV = 45;
+		this.MAINCAMERA_DISTANCE = 360;
+		this.MAINCAMERA_FOV = 30;
 		this.WIPECAMERA_DISTANCE = 1200;
 		this.WIPECAMERA_FOV = 10;
 
