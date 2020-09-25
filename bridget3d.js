@@ -124,12 +124,87 @@ class BridgetField {
 	// DOM 関連
 	// ------------------------------------------------------------
 
+	createElement(obj) {
+		if(typeof obj === "string") { return document.createTextNode(obj); }
+
+		let ret = document.createElement(obj.tagName);
+		for(let attr in obj) {
+			if(["tagName", "childNodes"].includes(attr)) {
+				// NOP
+			} else if(["innerHTML", "innerText"].includes(attr)) {
+				ret[attr] = obj[attr];
+			} else {
+				ret.setAttribute(attr, obj[attr]);
+			}
+		}
+
+		if(obj.childNodes) {
+			for(let c of obj.childNodes) {
+				ret.appendChild(this.createElement(c));
+			}
+		}
+
+		return ret;
+	}
+
+	htmlTag() {
+		let div = document.createElement("div");
+		div.appendChild(this.canvasTag());
+		div.appendChild(this.controlPanelTag());
+		return div;
+	}
+
 	canvasTag() {
 		let div = document.createElement("div");
 
 		div.appendChild(this.maincanvas);
 		div.appendChild(this.wipecanvas1);
 		div.appendChild(this.wipecanvas2);
+
+		return div;
+	}
+
+	controlPanelTag() {
+		let div = this.createElement({
+			tagName: "div", style: "position: absolute; left: 0; top: 0; background-color: #fff", childNodes: [
+				{tagName: "label", childNodes: [{tagName: "input", type: "radio", name: "color", value: "1", checked: "checked"}, "WHITE"]},
+				{tagName: "label", childNodes: [{tagName: "input", type: "radio", name: "color", value: "2"}, "BLACK"]},
+				{tagName: "input", type: "hidden", name: "selectedcolor", value: "1"},
+				{tagName: "br"},
+				{tagName: "input", type: "text", size: 8},
+				{tagName: "input", type: "button", value: "put"},
+				{tagName: "br"},
+				{tagName: "input", type: "button", value: "undo"}
+			]
+		});
+
+		div.addEventListener("mousedown", (ev) => { ev.stopPropagation(); }, false); // windows の mousemove (視点移動処理) が動作しないようにする
+		let i = div.getElementsByTagName("input");
+		let label1 = i[0], label2 = i[1], color = i[2], text = i[3], put = i[4], undo = i[5], redo = i[6];
+
+		label1.addEventListener("click", (ev) => { color.value = label1.value; }, false);
+		label2.addEventListener("click", (ev) => { color.value = label2.value; }, false);
+		text.addEventListener("keydown", (ev) => { if(ev.key == "Enter") { put.click(); } }, false);
+
+		put.addEventListener("click", (ev) => {
+			let position = this.parseBridgetNotation(text.value);
+			if(position) {
+				this.pushBlock(parseInt(color.value, 10), position);
+				this.tick();
+				text.style.color = "#000";
+				text.value = "";
+				text.focus();
+				(color.value == this.COLOR_WHITE ? label2 : label1).click();
+			} else {
+				text.style.color = "#f00";
+			}
+		});
+
+		undo.addEventListener("click", (ev) => {
+			let p = this.popBlock();
+			if(p) { (p[0].color == this.COLOR_WHITE ? label1 : label2).click(); }
+			this.tick();
+		});
 
 		return div;
 	}
@@ -297,6 +372,7 @@ class BridgetField {
 			obj.x = x;
 			obj.y = y;
 			obj.z = z;
+			obj.color = color;
 			obj.material = this.material_p[color];
 			obj.geometry = new THREE.BoxGeometry(this.BLOCK_SIZE, this.BLOCK_SIZE, this.BLOCK_SIZE);
 			obj.mesh = new THREE.Mesh(obj.geometry, obj.material);
@@ -331,7 +407,7 @@ class BridgetField {
 }
 
 let f = new BridgetField();
-document.body.appendChild(f.canvasTag());
+document.body.appendChild(f.htmlTag());
 //f.pushBlock(1, [[4, 3, 0], [4, 4, 0], [5, 3, 0], [5, 4, 0]]);
 //f.pushBlock(2, [[4, 5, 0], [4, 5, 1], [4, 4, 1], [4, 4, 2]]);
 //f.popBlock();
